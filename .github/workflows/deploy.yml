@@ -29,5 +29,5 @@ jobs:
 
       # 4️⃣ Test with curl
       - name: Test with curl
-        run: curl -
+  run: curl -s http://localhost:5000 | grep "Kashan Abbasi"
 
