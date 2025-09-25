@@ -1,0 +1,43 @@
+name: CI with GitHub Runner
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest   # GitHub-hosted runner
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t self-hosted-app:${{ github.sha }} .
+
+      - name: Run container locally for test
+        run: |
+          docker rm -f test || true
+          docker run -d --name test -p 5000:5000 self-hosted-app:${{ github.sha }}
+          sleep 5
+
+      - name: Test with curl
+        run: curl -s http://localhost:5000 | grep "Kashan Abbasi"
+
+      - name: Stop test container
+        if: always()
+        run: docker rm -f test || true
+
+      - name: Deploy to remote VM
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            docker rm -f prod || true
+            docker run -d --name prod -p 5000:5000 self-hosted-app:latest
+
