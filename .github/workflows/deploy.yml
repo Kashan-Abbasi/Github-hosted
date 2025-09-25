@@ -28,6 +28,6 @@ jobs:
           sleep 5
 
       # 4️⃣ Test with curl
-      - name: Test with curl
-  run: curl -s http://localhost:5000 | grep "Kashan Abbasi"
+        - name: Test with curl
+    run: curl -s http://localhost:5000 | grep "Kashan Abbasi"
 
