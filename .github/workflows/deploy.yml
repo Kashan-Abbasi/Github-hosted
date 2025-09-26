@@ -1,33 +1,34 @@
-name: CI with GitHub Runner
+name: CI/CD with GitHub Runner and EC2 Deploy
 
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-  workflow_dispatch:
 
 jobs:
-  build-test-deploy:
-    runs-on: ubuntu-latest   # GitHub-hosted runner
+  deploy:
+    runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout code
-      - name: Checkout repo
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2️⃣ Build Docker image
       - name: Build Docker image
-        run: docker build -t mycv-app:${{ github.sha }} .
+        run: docker build -t myapp:${{ github.sha }} .
 
-      # 3️⃣ Run container locally for test (on port 5000)
-      - name: Run container locally for test
+      - name: Test locally
         run: |
           docker rm -f test || true
-          docker run -d --name test -p 5000:5000 mycv-app:${{ github.sha }}
+          docker run -d --name test -p 5000:5000 myapp:${{ github.sha }}
           sleep 5
+          curl -s http://localhost:5000
 
-      # 4️⃣ Test with curl
-      - name: Test with curl
-        run: curl -s http://localhost:5000 | grep "Kashan Abbasi"
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.AWS_SSH_KEY }}
+          script: |
+            docker rm -f myapp || true
+            docker run -d --name myapp -p 5000:5000 myapp:${{ github.sha }}
 
