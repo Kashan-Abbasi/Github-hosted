@@ -9,26 +9,33 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout repo
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Step 2: Build Docker image locally on GitHub Runner
       - name: Build Docker image
         run: docker build -t myapp:${{ github.sha }} .
 
+      # Step 3: Test container locally (optional)
       - name: Test locally
         run: |
           docker rm -f test || true
           docker run -d --name test -p 5000:5000 myapp:${{ github.sha }}
           sleep 5
-          curl -s http://localhost:5000
+          docker ps -a
 
+      # Step 4: Deploy to EC2 via SSH
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.REMOTE_HOST }}
-          username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.AWS_SSH_KEY }}
+          host: ${{ secrets.HOST }}          # EC2 public IP
+          username: ${{ secrets.USERNAME }}  # e.g., ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }} # EC2 PEM private key
           script: |
+            cd /home/ubuntu/Github-hosted
+            git pull origin main || true
             docker rm -f myapp || true
-            docker run -d --name myapp -p 5000:5000 myapp:${{ github.sha }}
+            docker build -t myapp .
+            docker run -d --name myapp -p 5000:5000 myapp
 
