@@ -27,15 +27,32 @@ jobs:
 
       # Step 4: Deploy to EC2 via SSH
       - name: Deploy to EC2
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1
         with:
-          host: ${{ secrets.HOST }}          # EC2 public IP
-          username: ${{ secrets.USERNAME }}  # e.g., ubuntu
-          key: ${{ secrets.SSH_PRIVATE_KEY }} # EC2 PEM private key
+          host: ${{ secrets.HOST }}           # EC2 public IP
+          username: ${{ secrets.USERNAME }}   # e.g., ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }} # Private key in PEM format
+          port: 22
           script: |
-            cd /home/ubuntu/Github-hosted
-            git pull origin main || true
+            # Ensure Docker is installed
+            if ! command -v docker &> /dev/null
+            then
+              echo "Installing Docker..."
+              sudo apt update
+              sudo apt install -y docker.io
+              sudo systemctl enable --now docker
+            fi
+
+            # Navigate to app folder or create if missing
+            cd /home/ubuntu/Github-hosted || mkdir -p /home/ubuntu/Github-hosted && cd /home/ubuntu/Github-hosted
+
+            # Pull latest code or clone if folder empty
+            git pull origin main || git clone https://github.com/${{ github.repository }} .
+
+            # Remove old container if exists
             docker rm -f myapp || true
+
+            # Build and run new container
             docker build -t myapp .
             docker run -d --name myapp -p 5000:5000 myapp
 
