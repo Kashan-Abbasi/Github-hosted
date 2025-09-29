@@ -5,11 +5,6 @@ on:
     branches:
       - main
 
-env:
-  REMOTE_HOST: ${{ secrets.HOST }}
-  REMOTE_USER: ${{ secrets.USERNAME }}
-  REMOTE_PATH: /home/ubuntu
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -21,20 +16,19 @@ jobs:
       - name: Copy files to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ env.REMOTE_HOST }}
-          username: ${{ env.REMOTE_USER }}
-          key: ${{ secrets.AWS_SSH_KEY }}
-          source: "./*"
-          target: ${{ env.REMOTE_PATH }}
+          host: ${{ secrets.HOST }}          # use secret directly
+          username: ${{ secrets.USERNAME }}  # use secret directly
+          key: ${{ secrets.AWS_SSH_KEY }}    # private SSH key
+          source: "./*"                      # files to copy
+          target: "/home/ubuntu"             # destination path on server
 
       - name: Restart App on Port 5000
         uses: appleboy/ssh-action@v1.0.0
         with:
-          host: ${{ env.REMOTE_HOST }}
-          username: ${{ env.REMOTE_USER }}
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
           key: ${{ secrets.AWS_SSH_KEY }}
           script: |
             fuser -k 5000/tcp || true
             cd /home/ubuntu
             nohup python3 app.py > app.log 2>&1 &
-
