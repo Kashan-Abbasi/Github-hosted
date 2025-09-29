@@ -16,11 +16,11 @@ jobs:
       - name: Copy files to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.HOST }}          # use secret directly
-          username: ${{ secrets.USERNAME }}  # use secret directly
-          key: ${{ secrets.AWS_SSH_KEY }}    # private SSH key
-          source: "./*"                      # files to copy
-          target: "/home/ubuntu"             # destination path on server
+          host: ${{ secrets.HOST }}          # must be direct, not env
+          username: ${{ secrets.USERNAME }}  # must be direct, not env
+          key: ${{ secrets.AWS_SSH_KEY }}    # private key content
+          source: "./*"
+          target: "/home/ubuntu"
 
       - name: Restart App on Port 5000
         uses: appleboy/ssh-action@v1.0.0
