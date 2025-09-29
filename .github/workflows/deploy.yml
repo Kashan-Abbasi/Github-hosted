@@ -13,15 +13,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Debug step - check if vars are actually available
+      - name: Debug variables
+        run: |
+          echo "REMOTE_HOST=${{ vars.REMOTE_HOST }}"
+          echo "REMOTE_USER=${{ vars.REMOTE_USER }}"
+
       - name: Copy files to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ vars.REMOTE_HOST }}       # GitHub variable
-          username: ${{ vars.REMOTE_USER }}   # GitHub variable
-          key: ${{ secrets.AWS_SSH_KEY }}     # GitHub secret (private key)
+          host: ${{ vars.REMOTE_HOST }}
+          username: ${{ vars.REMOTE_USER }}
+          key: ${{ secrets.AWS_SSH_KEY }}
           source: "./*"
           target: "/home/ubuntu"
-          debug: true                         # enables debug output in logs
 
       - name: Restart App on Port 5000
         uses: appleboy/ssh-action@v1.0.0
