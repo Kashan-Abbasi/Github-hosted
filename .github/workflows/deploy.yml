@@ -5,21 +5,18 @@ on:
     branches:
       - main
 
+env:
+  REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+  REMOTE_USER: ${{ secrets.REMOTE_USER }}
+  REMOTE_PATH: /home/ubuntu
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    env: # ✅ Expose variables here
-      REMOTE_HOST: ${{ vars.REMOTE_HOST }}
-      REMOTE_USER: ${{ vars.REMOTE_USER }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Debug variables (check values)
-        run: |
-          echo "Host: $REMOTE_HOST"
-          echo "User: $REMOTE_USER"
 
       - name: Copy files to EC2
         uses: appleboy/scp-action@v0.1.7
@@ -28,7 +25,7 @@ jobs:
           username: ${{ env.REMOTE_USER }}
           key: ${{ secrets.AWS_SSH_KEY }}
           source: "./*"
-          target: "/home/ubuntu"
+          target: ${{ env.REMOTE_PATH }}
 
       - name: Restart App on Port 5000
         uses: appleboy/ssh-action@v1.0.0
