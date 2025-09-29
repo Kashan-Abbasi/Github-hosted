@@ -8,22 +8,24 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env: # ✅ Expose variables here
+      REMOTE_HOST: ${{ vars.REMOTE_HOST }}
+      REMOTE_USER: ${{ vars.REMOTE_USER }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Debug step - check if vars are actually available
-      - name: Debug variables
+      - name: Debug variables (check values)
         run: |
-          echo "REMOTE_HOST=${{ vars.REMOTE_HOST }}"
-          echo "REMOTE_USER=${{ vars.REMOTE_USER }}"
+          echo "Host: $REMOTE_HOST"
+          echo "User: $REMOTE_USER"
 
       - name: Copy files to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ vars.REMOTE_HOST }}
-          username: ${{ vars.REMOTE_USER }}
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
           key: ${{ secrets.AWS_SSH_KEY }}
           source: "./*"
           target: "/home/ubuntu"
@@ -31,8 +33,8 @@ jobs:
       - name: Restart App on Port 5000
         uses: appleboy/ssh-action@v1.0.0
         with:
-          host: ${{ vars.REMOTE_HOST }}
-          username: ${{ vars.REMOTE_USER }}
+          host: ${{ env.REMOTE_HOST }}
+          username: ${{ env.REMOTE_USER }}
           key: ${{ secrets.AWS_SSH_KEY }}
           script: |
             fuser -k 5000/tcp || true
